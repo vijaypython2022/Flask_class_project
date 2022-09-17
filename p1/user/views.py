@@ -287,34 +287,3 @@ def found(email):
 #     json.dump(data, open('p1/user//data.json', 'w'))
 #     return jsonify(data)
 
-@app.route('/search', methods=['GET'])
-def get_form():
-    return render_template('search.html')
-
-
-from sqlalchemy import extract
-
-
-@app.route('/month', methods=['GET'])
-def get_by_month():
-    input_month = request.args.get('month')
-    mydata = User.query.filter(extract('month', User.dob) == input_month).all()
-
-    res = [x.__repr__() for x in mydata]
-
-    return res
-
-# provide two value get all record using or
-from sqlalchemy import or_
-@app.route('/get_by_or',methods=['GET'])
-def get_by_email():
-    username = request.form.get('username')
-    email = request.form.get('email')
-    user=db.session.query(User).filter(or_(User.username==username,User.email==email)).first()
-    res = user.__repr__()
-    return res
-    # if user:
-    #     user.email=email
-    #     db.session.commit()
-    #     return 'update'
-    # return 'Not update'
