@@ -3,19 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>New Record</title>
+
 </head>
 <h2>Insert New Entry</h2>
-<body align="center">
+<body align="center" >
+
     <form action="/form_insert" method="post" >
         <label>Name:</label>
         <input type="text" name="name" placeholder="User name" required="" size="12"><br><br>
         <label>Email:   </label>
         <input type="text" name="email" placeholder="User name" required="" size="12"><br><br>
+        <label>Join Date:   </label>
+        <input type=date name="join_date" ><br><br>
         <label>Password:   </label>
         <input type="password" name="password" placeholder="Password" required="" size="12"><br><br>
         <button>Submit</button>
         <input type=reset value="Reset">
+
     </form>
+
 
 </body>
 </html>

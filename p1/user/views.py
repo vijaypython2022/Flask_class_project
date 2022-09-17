@@ -1,5 +1,5 @@
 import json
-from flask import Blueprint, jsonify, request, render_template, abort
+from flask import Blueprint, jsonify, request, render_template, abort, redirect, url_for
 from p1.user.models import User
 from flask_sqlalchemy import SQLAlchemy
 
@@ -8,17 +8,25 @@ db = SQLAlchemy()
 app = Blueprint('user', __name__)
 
 
+# @app.before_first_request
+# def create_table():
+#     db.create_all()
+
+
 # CURD Operation on Mysql db
 
 # read data from table
 
 
-@app.route('/u', methods=['GET'])
+@app.route('/get_all', methods=['GET'])
 def fetch_user():
-    li = []
+    # method1
+    # users = User.query.all()  # select * from emp
+    # res = [x.__repr__() for x in users]
+    # return jsonify(res)
 
-    users = User.query.all()  # select * from emp
-    res = [x.__repr__() for x in users]
+    # method2
+    # li = []
     # for user in users:
     #     res = {
     #         "id": user.id,
@@ -27,10 +35,21 @@ def fetch_user():
     #         "password": user.password
     #     }
     #     li.append(res)
-    return jsonify(res)
+    #  return li
+
+    # Method 3
+    my = User.query.all()
+    return render_template('view_all.html', my=my)
 
 
 # get data from mysql by id
+
+@app.route('/id/<int:id>', methods=['GET'])
+def get_by_id(id):
+    user_data = User.query.get(id)
+    return render_template('view_all.html', user_data=user_data)
+
+
 @app.route('/<int:id>', methods=['GET'])
 def show_user(id):
     users = User.query.get(id)
@@ -43,7 +62,7 @@ def show_user(id):
 @app.route('/get_name', methods=['GET'])
 def fetch_by_name():
     username = request.args.get('username')  # provide input ?username=vijay
-    user = User.query.filter(User.username == username)  # .first()
+    user = User.query.filter_by(username=username)  # .first()
     res = [x.__repr__() for x in user]
     # res=user.__repr__()
     # res.pop('password')
@@ -65,20 +84,25 @@ def add_user():
 
 
 # write data in MYSQL table (input html form)
-@app.route('/get_form', methods=['GET'])
-def form_html():
-    return render_template("insert.html")
+# @app.route('/get_form', methods=['GET'])
+# def form_html():
+#     return render_template("insert.html")
 
 
-@app.route('/form_insert', methods=['POST'])
+@app.route('/form_insert', methods=['GET', 'POST'])
 def add_user_form():
-    username = request.form.get('name')
-    email = request.form.get('email')
-    password = request.form.get('password')
-    data = User(username=username, email=email, password=password)
-    db.session.add(data)
-    db.session.commit()
-    return 'User added'
+    if request.method == 'GET':
+        return render_template('insert.html')
+    if request.method == 'POST':
+        username = request.form.get('name')
+        email = request.form.get('email')
+        join = request.form.get('join_date')
+        password = request.form.get('password')
+        data = User(username=username, email=email, password=password, dob=join)
+        db.session.add(data)
+        db.session.commit()
+        # return 'User added'
+        return {"Status": True, "Name": username, "Email": email, "Password": password, "Dob": join}
 
 
 # update table data of mysql using id
@@ -97,7 +121,7 @@ def update_user(id):
         data.password = password
         db.session.add(data)
         db.session.commit()
-        return jsonify({"Update": True})
+        return jsonify({"Update": True, "id": id})
 
     # for key in user_data:
     #     if key['id']==(id):
@@ -107,26 +131,68 @@ def update_user(id):
     # db.session.commit()
     return "User Data Updated Successfully"
 
-#delete user from db using id
-app.route('/delete/<int:id>',methods=['DELETE'])
+
+@app.route('/update_form')
+def update():
+    return render_template('update.html')
+
+
+@app.route('/update1', methods=['GET', 'POST'])
+def update_user_form():
+    if request.method == 'GET':
+        return render_template('update.html')
+
+    if request.method == 'POST':
+        id = request.form.get('id')
+        data = User.query.get(id)
+        email = request.form.get('email')
+        data.email = email
+        db.session.commit()
+        return 'updated'
+
+    return jsonify({"Update": False})
+
+
+# delete user from db using id
+@app.route('/delete/<int:id>')
 def delete_user(id):
-    user=User.query.get(id)
-    db.session.delete(user)
+    x=User.query.get(id)
+    db.session.delete(x)
     db.session.commit()
     return 'user delete successfully'
 
+
+# @app.route('/hello/')
+@app.route('/h1')
+def hello():
+    name = request.args.get('name')
+    return render_template('view.html', name=name)
+
+
+@app.route('/hello/')
+@app.route('/hello/<name>')
+def hello2(name=None):
+    return render_template('view.html', name=name)
+
+
+@app.route("/found/<email>")
+def found(email):
+    li = [1, 2, 3, 4]
+    # return redirect(url_for("found", email=x, list_of_objects=y))
+
+    return render_template("view.html", keys=email)
 
 
 # *********************************************************************
 # CURD operation on JSON file
 
-with open("p1/user/data.json") as abc:
-    data = json.load(abc)
+# with open("p1/user/data.json") as abc:
+#     data = json.load(abc)
 
 
-@app.route('/hello', methods=['GET'])
-def hellow():
-    return 'Hellow Python'
+# @app.route('/hi', methods=['GET'])
+# def hellow():
+#     return 'Hellow Python'
 
 
 # @app.route('/', methods=['GET'])
@@ -237,3 +303,18 @@ def get_by_month():
     res = [x.__repr__() for x in mydata]
 
     return res
+
+# provide two value get all record using or
+from sqlalchemy import or_
+@app.route('/get_by_or',methods=['GET'])
+def get_by_email():
+    username = request.form.get('username')
+    email = request.form.get('email')
+    user=db.session.query(User).filter(or_(User.username==username,User.email==email)).first()
+    res = user.__repr__()
+    return res
+    # if user:
+    #     user.email=email
+    #     db.session.commit()
+    #     return 'update'
+    # return 'Not update'
